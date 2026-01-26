@@ -10,7 +10,9 @@
   "files": [
     "dist",
     "AGENTS.md",
-    ".opencode"
+    ".opencode",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc",
