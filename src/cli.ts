@@ -226,7 +226,7 @@ async function installModules(
 	overwrite: boolean,
 ): Promise<void> {
 	const moduleMap: Record<string, [string, string]> = {
-		core: ["AGENTS.md", "AGENTS.md"],
+		core: ["README.md", "README.md"],
 		agents: [".opencode/agents", ".opencode/agents"],
 		commands: [".opencode/commands", ".opencode/commands"],
 		skills: [".opencode/skills", ".opencode/skills"],
@@ -238,6 +238,8 @@ async function installModules(
 			await copyFile(src, dest, targetDir, overwrite);
 			if (module === "core") {
 				await fs.ensureDir(path.join(targetDir, ".opencode"));
+				await copyFile("AGENTS.md", "AGENTS.md", targetDir, overwrite);
+				await copyFile("LICENSE", "LICENSE", targetDir, overwrite);
 				await copyFile(
 					".opencode/settings.json",
 					".opencode/settings.json",
@@ -475,7 +477,7 @@ async function main(): Promise<void> {
 			message: "Select components to install:",
 			choices: [
 				{
-					name: "Core Configuration (Number of agents, .agent/settings.json)",
+					name: "Core (README, LICENSE, AGENTS.md, settings.json)",
 					value: "core",
 					checked: true,
 				},

@@ -8,8 +8,8 @@ This file provides guidance to OpenCode when working with code in this repositor
 
 ### 1. Evidence-Based Development
 **Never guess** — always verify with official sources before implementation:
-- Use context7 MCP for official documentation lookup
-- Use web search for community solutions and patterns
+- Use **context7** MCP for official documentation lookup
+- Use **tavily** search for community solutions and patterns
 - Check existing code with search before implementing
 - Verify assumptions against test results
 
@@ -48,7 +48,7 @@ When errors occur:
 ### Starting Any Task
 1. Read AGENTS.md and relevant documentation
 2. Search for existing implementations (avoid duplicates)
-3. Run confidence check (see `.agent/skills/confidence-check/`)
+3. Run confidence check (see `.opencode/skills/confidence-check/`)
 4. Only proceed if confidence ≥ 70%
 
 ### During Implementation
@@ -59,7 +59,7 @@ When errors occur:
 
 ### After Implementation
 1. Validate all tests pass
-2. Run self-check protocol (`.agent/skills/self-check/`)
+2. Run self-check protocol (`.opencode/skills/self-check/`)
 3. Document new patterns discovered
 4. Update relevant documentation
 
@@ -128,18 +128,16 @@ For significant implementations, follow Plan-Do-Check-Act:
 ## 📁 Project Structure
 
 ```
-.agent/
-├── skills/           # Reusable skill modules
-│   ├── confidence-check/
-│   ├── self-check/
-│   └── reflexion/
-├── workflows/        # Slash command definitions
-└── settings.json     # OpenCode configuration
+.opencode/
+├── agents/             # Specialized agent personas
+├── commands/           # Slash command definitions
+└── skills/             # Reusable skill modules
+    ├── confidence-check/
+    ├── self-check/
+    └── reflexion/
 
-agents/               # Specialized agent personas
-modes/                # Behavioral mode configurations  
-patterns/             # Reusable workflow patterns
-docs/                 # Extended documentation
+AGENTS.md               # Core principles and guidelines
+opencode.json           # OpenCode configuration
 ```
 
 ---
@@ -148,26 +146,29 @@ docs/                 # Extended documentation
 
 When complex tasks require specialized expertise, delegate to appropriate agent:
 
-| Agent | Expertise |
-|-------|-----------|
-| **pm-agent** | Orchestration, PDCA, documentation |
-| **architect** | System design, architecture |
-| **backend** | APIs, databases, server logic |
+| Agent | Purpose |
+|-------|---------|
+| **pm-agent** | Project orchestration, PDCA cycles, documentation |
+| **architect** | System design, architecture, technical strategy |
+| **backend** | APIs, databases, server-side logic |
 | **frontend** | UI/UX, components, styling |
 | **security** | Security review, threat modeling |
 | **quality** | Testing, code review |
-| **researcher** | Deep research, documentation |
+| **researcher** | Deep research, fact-checking |
 | **writer** | Technical documentation |
+| **reviewer** | Code review, quality assurance |
+| **optimizer** | Performance optimization |
 
 ---
 
-## 🔧 MCP Integration (Optional)
+## 🔧 MCP Integration
 
-If MCP servers are available:
+The framework assumes the following MCP servers are available for optimal performance:
 - **context7**: Official documentation lookup
+- **serena**: Codebase analysis and navigation
 - **tavily**: Web search for research
-- **sequential**: Multi-step reasoning
-- **playwright**: Browser automation
+- **filesystem**: File system access
+- **sequential-thinking**: Multi-step reasoning
 
 ---
 
