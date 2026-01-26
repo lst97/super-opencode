@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build TypeScript
+        run: pnpm build
+
+      - name: Verify CLI executable
+        run: node dist/cli.js --help
+
+  structure-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Framework Structure
+        run: |
+          if [ ! -f "AGENTS.md" ]; then echo "❌ Missing AGENTS.md"; exit 1; fi
+          if [ ! -d "dist" ]; then echo "⚠️ Warning: dist directory not checked in (expected for library source, but ensure build works)"; fi
+          if [ ! -f "src/cli.ts" ]; then echo "❌ Missing src/cli.ts"; exit 1; fi
+          echo "✅ Framework structure verified"

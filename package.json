@@ -1,0 +1,43 @@
+{
+  "name": "super-opencode",
+  "version": "1.0.1",
+  "description": "Super-OpenCode Framework Installer",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "super-opencode": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "AGENTS.md",
+    ".opencode"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "lint": "biome check src/",
+    "format": "biome check --write src/",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "opencode",
+    "agent",
+    "framework",
+    "cli"
+  ],
+  "author": "lst97",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "fs-extra": "^11.3.3",
+    "inquirer": "^13.2.1",
+    "ora": "^9.1.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.13",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^25.0.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
