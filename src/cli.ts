@@ -205,8 +205,8 @@ async function copyFile(
 	targetDir: string,
 	overwrite: boolean,
 ): Promise<void> {
-	const srcPath = resolveSafePath(FRAMEWORK_DIR, path.join(FRAMEWORK_DIR, src));
-	const destPath = resolveSafePath(targetDir, path.join(targetDir, dest));
+	const srcPath = resolveSafePath(FRAMEWORK_DIR, src);
+	const destPath = resolveSafePath(targetDir, dest);
 
 	if (await fs.pathExists(srcPath)) {
 		try {

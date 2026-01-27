@@ -1,5 +1,4 @@
 ---
-name: analyze
 description: "Orchestrator command that triggers specialized agents for code, security, and architecture review."
 ---
 
