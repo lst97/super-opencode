@@ -618,6 +618,7 @@ async function main(): Promise<void> {
 		},
 	];
 
+	// biome-ignore lint/suspicious/noExplicitAny: inquirer types are complex, using any for compatibility
 	const answers = await inquirer.prompt<InstallerAnswers>(questions as any);
 
 	if (!answers.proceed) {

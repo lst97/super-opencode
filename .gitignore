@@ -1,8 +1,7 @@
 # Dependencies
 node_modules/
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+# Note: pnpm-lock.yaml is intentionally NOT ignored - commit it for reproducible builds
+# package-lock.json and yarn.lock are ignored as this project uses pnpm
 
 # Build output
 dist/
