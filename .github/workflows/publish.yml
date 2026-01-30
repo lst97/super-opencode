@@ -7,18 +7,19 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: npm
     permissions:
       contents: read
-      id-token: write
+      id-token: write  # Required for OIDC trusted publishing
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "lts/*"
           registry-url: "https://registry.npmjs.org"
@@ -26,6 +27,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      
+      # Publish using npm Trusted Publishing (OIDC)
+      # No NPM_TOKEN needed - uses OIDC authentication
       - run: pnpm publish --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
