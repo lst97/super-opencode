@@ -5,9 +5,11 @@ description: Project management and orchestration
 # /soc-pm
 
 ## 1. Command Overview
+
 The `/soc-pm` command is the "Orchestrator." It manages the high-level state of the project. It uses the PDCA (Plan-Do-Check-Act) cycle to break down complex goals into `tasks`, track progress, and unblock other agents. It is the owner of `task.md`.
 
 ## 2. Triggers & Routing
+
 The command is the primary interface for the `pm-agent`.
 
 | Trigger Scenario | Flag | Target Agent | Action |
@@ -17,34 +19,41 @@ The command is the primary interface for the `pm-agent`.
 | **Verify Work** | `review` | `[pm-agent]` | Check deliverables |
 
 ## 3. Usage & Arguments
+
 ```bash
 /soc-pm [action] [target] [flags]
 ```
 
 ### Arguments
--   **`[action]`**: `plan`, `status`, `review`, `checkpoint`.
--   **`[target]`**: (Optional) Specific feature or milestone.
+
+- **`[action]`**: `plan`, `status`, `review`, `checkpoint`.
+- **`[target]`**: (Optional) Specific feature or milestone.
 
 ### Flags
--   **`--detail`**: Show full task history.
+
+- **`--detail`**: Show full task history.
 
 ## 4. Behavioral Flow (Orchestration)
 
 ### Phase 1: Plan (The Roadmap)
-1.  **Analyze**: Read User Request -> Break into Epics/Stories.
-2.  **Document**: updates `task.md` with checkboxes `[ ]`.
+
+1. **Analyze**: Read User Request -> Break into Epics/Stories.
+2. **Document**: updates `task.md` with checkboxes `[ ]`.
 
 ### Phase 2: Do (Tracking)
--   Monitors tool usage.
--   Updates task status to `[/]` (In Progress) or `[x]` (Done).
+
+- Monitors tool usage.
+- Updates task status to `[/]` (In Progress) or `[x]` (Done).
 
 ### Phase 3: Check (The Audit)
--   **Review**: Did we meet the acceptance criteria?
--   **Reflect**: Use `reflexion` skill if blocked.
+
+- **Review**: Did we meet the acceptance criteria?
+- **Reflect**: Use `reflexion` skill if blocked.
 
 ## 5. Output Guidelines (The Contract)
 
 ### Project Status Report
+
 ```markdown
 ## Project Status: [Phase]
 
@@ -64,36 +73,49 @@ The command is the primary interface for the `pm-agent`.
 ## 6. Examples
 
 ### A. Initial Planning
+
 ```bash
 /soc-pm plan "Build User Dashboard"
 ```
+
 *Effect:* Creates `task.md` with breakdown: "Design UI", "Setup API", "Integrate Frontend".
 
 ### B. Status Update
+
 ```bash
 /soc-pm status
 ```
+
 *Effect:* Reads current state and summarizes what has been done vs what is left.
 
 ## 7. Dependencies & Capabilities
 
 ### Agents
--   **PM Agent**: `@[.opencode/agents/pm-agent.md]` - Self-referential.
--   **All Agents**: Delegates work to them.
+
+- **PM Agent**: `@[.opencode/agents/pm-agent.md]` - Self-referential.
+- **All Agents**: Delegates work to them.
 
 ### Skills
--   **Reflexion**: `@[.opencode/skills/reflexion/SKILL.md]` - For unblocking the team.
+
+- **Reflexion**: `@[.opencode/skills/reflexion/SKILL.md]` - For unblocking the team.
 
 ### MCP Integration
--   **`filesystem`**: Managing `task.md` and `implementation_plan.md`.
+
+- **`filesystem`**: Managing `task.md` and `implementation_plan.md`.
 
 ## 8. Boundaries
 
 **Will:**
--   Manage `task.md`.
--   Delegate tasks to other agents.
--   Track overall progress.
+
+- Manage `task.md`.
+- Delegate tasks to other agents.
+- Track overall progress.
 
 **Will Not:**
--   **Write Code**: It manages those who write code.
--   **Solve Technical Bugs**: It assigns `[backend]` or `[quality]` to solve them.
+
+- **Write Code**: It manages those who write code.
+- **Solve Technical Bugs**: It assigns `[backend]` or `[quality]` to solve them.
+
+## User Instruction
+
+The user have executed the `/soc-pm` command by parsing the user's arguments provided in `<user-instruction>$ARGUMENTS</user-instruction>`, then perform the specified action (plan, status, review, or checkpoint) on the given target (or entire project if none specified), delegate to the pm-agent to manage the `task.md` file through the PDCA cycle—breaking down requests into epics and stories when planning, monitoring progress and updating task statuses during tracking, and verifying deliverables against acceptance criteria when reviewing—and generate a comprehensive project status report showing completed tasks, current focus areas, and any blockers.

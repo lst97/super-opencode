@@ -5,9 +5,11 @@ description: Help and command reference
 # /soc-help
 
 ## 1. Command Overview
+
 The `/soc-help` command is the "Librarian." It serves as the primary documentation interface for the agent system. It explains *how* to use the other commands, details what each agent does, and lists available skills. It uses the `researcher` agent to find answers within the system's own documentation.
 
 ## 2. Triggers & Routing
+
 The command is self-contained but may use `researcher` for deep queries.
 
 | Trigger Scenario | Flag | Target Agent | Action |
@@ -17,29 +19,35 @@ The command is self-contained but may use `researcher` for deep queries.
 | **Workflow Guide** | `[topic]` | `[researcher]` | Summarize best practices |
 
 ## 3. Usage & Arguments
+
 ```bash
 /soc-help [target] [flags]
 ```
 
 ### Arguments
--   **`[target]`**: (Optional) Specific command (`implement`), agent (`backend`), or topic (`workflows`). Default: Shows index.
+
+- **`[target]`**: (Optional) Specific command (`implement`), agent (`backend`), or topic (`workflows`). Default: Shows index.
 
 ### Flags
--   **`--verbose`**: Show detailed descriptions and hidden flags.
+
+- **`--verbose`**: Show detailed descriptions and hidden flags.
 
 ## 4. Behavioral Flow (Orchestration)
 
 ### Phase 1: Lookup
-1.  **Index**: Check if target is a known Command, Agent, or Skill.
-2.  **Search**: If unknown, grep `.opencode/` documentation for keywords.
+
+1. **Index**: Check if target is a known Command, Agent, or Skill.
+2. **Search**: If unknown, grep `.opencode/` documentation for keywords.
 
 ### Phase 2: Formatting
--   **Structure**: Group by Category (Workflow vs Skill).
--   **Clarity**: Show "Quick Start" snippets.
+
+- **Structure**: Group by Category (Workflow vs Skill).
+- **Clarity**: Show "Quick Start" snippets.
 
 ## 5. Output Guidelines (The Contract)
 
 ### Help Document
+
 ```markdown
 ## Help: [Target]
 
@@ -60,35 +68,48 @@ The command is self-contained but may use `researcher` for deep queries.
 ## 6. Examples
 
 ### A. Command Help
+
 ```bash
 /soc-help implement
 ```
+
 *Effect:* Displays usage for `/soc-implement`, including flags like `--agent` and `--test`.
 
 ### B. Agent Role
+
 ```bash
 /soc-help backend
 ```
+
 *Effect:* Shows the `backend` agent's persona, including "Prime Directives" and "Restrictions."
 
 ## 7. Dependencies & Capabilities
 
 ### Agents
--   **Researcher**: `@[.opencode/agents/researcher.md]` - For finding unstructured help.
+
+- **Researcher**: `@[.opencode/agents/researcher.md]` - For finding unstructured help.
 
 ### Skills
--   **None**: This is a read-only command.
+
+- **None**: This is a read-only command.
 
 ### MCP Integration
--   **`filesystem`**: Reading documentation files.
+
+- **`filesystem`**: Reading documentation files.
 
 ## 8. Boundaries
 
 **Will:**
--   Explain system capabilities.
--   List available tools.
--   Provide syntax examples.
+
+- Explain system capabilities.
+- List available tools.
+- Provide syntax examples.
 
 **Will Not:**
--   **Execute Commands**: It only explains them.
--   **Hallucinate Features**: Only lists what exists in `.opencode/`.
+
+- **Execute Commands**: It only explains them.
+- **Hallucinate Features**: Only lists what exists in `.opencode/`.
+
+## User Instruction
+
+The user have executed the `/soc-help` command by parsing the user's arguments provided in `<user-instruction>$ARGUMENTS</user-instruction>`, then look up the specified target (command, agent, skill, or topic) in the system documentation, search the `.opencode/` directory for relevant information if the target is unknown, and format a comprehensive help document showing the description, usage syntax, key features, and related commands for the requested item, providing quick start snippets and grouping information by category for clarity.
