@@ -15,6 +15,87 @@ const __dirname = path.dirname(__filename);
 
 const FRAMEWORK_DIR = path.join(__dirname, "..");
 
+/**
+ * Get the platform-specific global configuration directory for OpenCode
+ * Follows XDG Base Directory Specification on Linux, standard locations on macOS and Windows
+ */
+function getGlobalConfigDir(): string {
+	const platform = os.platform();
+	const homeDir = os.homedir();
+
+	// Check for OPENCODE_CONFIG_DIR environment variable first
+	const envConfigDir = process.env.OPENCODE_CONFIG_DIR;
+	if (envConfigDir) {
+		return path.resolve(envConfigDir);
+	}
+
+	if (platform === "win32") {
+		// Windows: %APPDATA%\opencode or %LOCALAPPDATA%\opencode
+		const appData =
+			process.env.APPDATA || path.join(homeDir, "AppData", "Roaming");
+		return path.join(appData, "opencode");
+	} else {
+		// macOS and Linux: use ~/.config/opencode per spec
+		const xdgConfigHome = process.env.XDG_CONFIG_HOME;
+		if (xdgConfigHome) {
+			return path.join(xdgConfigHome, "opencode");
+		}
+		// Default: ~/.config/opencode
+		return path.join(homeDir, ".config", "opencode");
+	}
+}
+
+/**
+ * Get the framework installation directory
+ * Returns the appropriate directory based on installation scope
+ *
+ * Note: According to OpenCode spec, framework files (agents, skills, commands)
+ * should be in ~/.config/opencode/ alongside the opencode.json config file
+ */
+function getFrameworkInstallDir(scope: "global" | "project"): string {
+	if (scope === "global") {
+		// For global installations, use the config directory (NOT data directory)
+		// This places agents/, skills/, commands/ alongside opencode.json
+		return getGlobalConfigDir();
+	}
+	// For project installations, use current working directory
+	return process.cwd();
+}
+
+/**
+ * Get the path to the opencode.json configuration file
+ */
+function getConfigFilePath(
+	scope: "global" | "project",
+	targetDir: string,
+): string {
+	if (scope === "global") {
+		return path.join(getGlobalConfigDir(), CONFIG_FILENAME);
+	}
+	return path.join(targetDir, CONFIG_FILENAME);
+}
+
+/**
+ * Get the default allowed paths for Filesystem MCP based on platform
+ */
+function getDefaultFilesystemPaths(targetDir: string): string[] {
+	const platform = os.platform();
+	const homeDir = os.homedir();
+
+	// Always include the target project directory
+	const paths = [targetDir];
+
+	if (platform === "win32") {
+		// Windows: include Documents folder and home
+		paths.push(path.join(homeDir, "Documents"));
+	} else {
+		// Unix-like: include home directory
+		paths.push(homeDir);
+	}
+
+	return paths;
+}
+
 interface InstallerAnswers {
 	scope: "global" | "project";
 	proceed: boolean;
@@ -49,26 +130,6 @@ const MCP_KEY = "mcp";
 const MCP_SERVERS_KEY = "mcpServers";
 const CONFIG_FILENAME = "opencode.json";
 const FALLBACK_FILENAME = "mcp_settings.json";
-
-/**
- * Validates that a resolved path is within the allowed base directory
- * @throws Error if path traversal is detected
- */
-function resolveSafePath(baseDir: string, targetPath: string): string {
-	const resolvedBase = path.resolve(baseDir);
-	const resolvedTarget = path.resolve(targetPath);
-
-	if (
-		!resolvedTarget.startsWith(resolvedBase + path.sep) &&
-		resolvedTarget !== resolvedBase
-	) {
-		throw new Error(
-			`Path traversal detected: ${resolvedTarget} is outside ${resolvedBase}`,
-		);
-	}
-
-	return resolvedTarget;
-}
 
 function sanitizePaths(pathInput: string): string[] {
 	const paths = pathInput
@@ -206,8 +267,20 @@ async function copyFile(
 	targetDir: string,
 	overwrite: boolean,
 ): Promise<void> {
-	const srcPath = resolveSafePath(FRAMEWORK_DIR, src);
-	const destPath = resolveSafePath(targetDir, dest);
+	const srcPath = path.join(FRAMEWORK_DIR, src);
+	const destPath = path.join(targetDir, dest);
+
+	// Only validate destination path (user-controlled)
+	const resolvedDest = path.resolve(destPath);
+	const resolvedTarget = path.resolve(targetDir);
+	if (
+		!resolvedDest.startsWith(resolvedTarget + path.sep) &&
+		resolvedDest !== resolvedTarget
+	) {
+		throw new Error(
+			`Path traversal detected: ${resolvedDest} is outside ${resolvedTarget}`,
+		);
+	}
 
 	if (await fs.pathExists(srcPath)) {
 		try {
@@ -225,12 +298,19 @@ async function installModules(
 	modules: string[],
 	targetDir: string,
 	overwrite: boolean,
+	scope: "global" | "project",
 ): Promise<void> {
+	// For global installs, copy directly to targetDir/agents (no .opencode wrapper)
+	// For project installs, copy to targetDir/.opencode/agents
+	const agentsDest = scope === "global" ? "agents" : ".opencode/agents";
+	const commandsDest = scope === "global" ? "commands" : ".opencode/commands";
+	const skillsDest = scope === "global" ? "skills" : ".opencode/skills";
+
 	const moduleMap: Record<string, [string, string]> = {
 		core: ["README.md", "README.md"],
-		agents: [".opencode/agents", ".opencode/agents"],
-		commands: [".opencode/commands", ".opencode/commands"],
-		skills: [".opencode/skills", ".opencode/skills"],
+		agents: [".opencode/agents", agentsDest],
+		commands: [".opencode/commands", commandsDest],
+		skills: [".opencode/skills", skillsDest],
 	};
 
 	for (const module of modules) {
@@ -241,12 +321,6 @@ async function installModules(
 				await fs.ensureDir(path.join(targetDir, ".opencode"));
 				await copyFile("AGENTS.md", "AGENTS.md", targetDir, overwrite);
 				await copyFile("LICENSE", "LICENSE", targetDir, overwrite);
-				await copyFile(
-					".opencode/settings.json",
-					".opencode/settings.json",
-					targetDir,
-					overwrite,
-				);
 			}
 		}
 	}
@@ -318,15 +392,40 @@ async function collectEnvVars(
 async function configureFilesystemMcp(
 	targetDir: string,
 ): Promise<McpServerConfig> {
+	const defaultPaths = getDefaultFilesystemPaths(targetDir);
 	const { allowedPaths: pathsInput } = await inquirer.prompt([
 		{
 			type: "input",
 			name: "allowedPaths",
 			message: "Enter absolute paths for Filesystem MCP (comma separated):",
-			default: targetDir,
+			default: defaultPaths.join(", "),
 		},
 	]);
 	const sanitizedPaths = sanitizePaths(pathsInput);
+
+	// Validate that paths exist and are accessible
+	const validPaths: string[] = [];
+	for (const p of sanitizedPaths) {
+		try {
+			const stats = await fs.stat(p);
+			if (stats.isDirectory()) {
+				validPaths.push(p);
+			} else {
+				console.warn(chalk.yellow(`⚠️  Skipping non-directory path: ${p}`));
+			}
+		} catch {
+			console.warn(
+				chalk.yellow(`⚠️  Path does not exist or is not accessible: ${p}`),
+			);
+		}
+	}
+
+	if (validPaths.length === 0) {
+		console.warn(
+			chalk.yellow("⚠️  No valid paths provided. Using target directory only."),
+		);
+		validPaths.push(targetDir);
+	}
 
 	return {
 		type: "local",
@@ -334,7 +433,7 @@ async function configureFilesystemMcp(
 			"npx",
 			"-y",
 			"@modelcontextprotocol/server-filesystem",
-			...sanitizedPaths,
+			...validPaths,
 		],
 	};
 }
@@ -368,10 +467,7 @@ async function writeMcpConfiguration(
 	scope: "global" | "project",
 	targetDir: string,
 ): Promise<void> {
-	const configPath =
-		scope === "global"
-			? path.join(os.homedir(), ".config", "opencode", CONFIG_FILENAME)
-			: path.join(process.cwd(), CONFIG_FILENAME);
+	const configPath = getConfigFilePath(scope, targetDir);
 
 	let finalSettings: Settings = {};
 	let writeTarget = configPath;
@@ -447,29 +543,50 @@ async function handleMcpInstallation(
 async function main(): Promise<void> {
 	console.log(chalk.cyan.bold("\n🚀 Welcome to Super-OpenCode Installer\n"));
 
+	// Show platform info
+	const platform = os.platform();
+	const homeDir = os.homedir();
+	console.log(chalk.gray(`Platform: ${platform} | Home: ${homeDir}\n`));
+
+	// Display installation options info before selection
+	console.log(chalk.cyan("📦 Installation Options:\n"));
+	console.log(chalk.white("🌍 Global Install (Recommended)"));
+	console.log(chalk.gray(`   Framework: ${getGlobalConfigDir()}`));
+	console.log(
+		chalk.gray(
+			`   Config: ${path.join(getGlobalConfigDir(), "opencode.json")}`,
+		),
+	);
+	console.log(chalk.gray(`   Available for all projects\n`));
+	console.log(chalk.white("📁 Project Install (Current Directory)"));
+	console.log(chalk.gray(`   Framework: ${process.cwd()}`));
+	console.log(
+		chalk.gray(`   Config: ${path.join(process.cwd(), "opencode.json")}`),
+	);
+	console.log(chalk.gray(`   Project-specific only\n`));
+
 	const scopeAnswer = await inquirer.prompt([
 		{
 			type: "list",
 			name: "scope",
 			message: "Where would you like to install Super-OpenCode?",
 			choices: [
-				{ name: "Global (Recommended for User-wide access)", value: "global" },
-				{ name: "Project (Current Directory)", value: "project" },
+				{ name: "🌍 Global (Recommended)", value: "global" },
+				{ name: "📁 Project (Current Directory)", value: "project" },
 			],
 			default: "global",
 		},
 	]);
 
-	const targetDir =
-		scopeAnswer.scope === "global"
-			? path.join(os.homedir(), ".opencode")
-			: process.cwd();
+	const targetDir = getFrameworkInstallDir(
+		scopeAnswer.scope as "global" | "project",
+	);
 
 	const questions = [
 		{
 			type: "confirm",
 			name: "proceed",
-			message: `Install Super-OpenCode to ${chalk.yellow(targetDir)}?`,
+			message: `\n📦 Ready to install to:\n   ${chalk.cyan(targetDir)}\n\n   ${chalk.gray("This will create:")}\n   ${chalk.gray("• Framework files (agents, commands, skills)")}\n   ${chalk.gray("• Configuration file (opencode.json)")}\n\nProceed with installation?`,
 			default: true,
 		},
 		{
@@ -478,7 +595,7 @@ async function main(): Promise<void> {
 			message: "Select components to install:",
 			choices: [
 				{
-					name: "Core (README, LICENSE, AGENTS.md, settings.json)",
+					name: "Core (README, LICENSE, AGENTS.md)",
 					value: "core",
 					checked: true,
 				},
@@ -512,7 +629,7 @@ async function main(): Promise<void> {
 
 	try {
 		const { modules, overwrite } = answers;
-		await installModules(modules, targetDir, overwrite);
+		await installModules(modules, targetDir, overwrite, scopeAnswer.scope);
 
 		spinner.stop();
 
@@ -521,19 +638,30 @@ async function main(): Promise<void> {
 		spinner.start();
 		spinner.succeed(chalk.green("Installation complete!"));
 
-		console.log("\nNext steps:");
+		console.log(chalk.green.bold("\n✨ Installation Summary\n"));
+		console.log(chalk.white(`📦 Framework: ${chalk.cyan(targetDir)}`));
+		console.log(
+			chalk.white(
+				`⚙️  Config: ${chalk.cyan(getConfigFilePath(scopeAnswer.scope as "global" | "project", targetDir))}\n`,
+			),
+		);
+
+		console.log(chalk.yellow.bold("Next Steps:\n"));
+		console.log(chalk.white("1. 📖 Read AGENTS.md for workflow guidelines"));
+		console.log(chalk.white("2. 🔧 Configure MCP servers if needed"));
+		console.log(chalk.white("3. 🚀 Start using: super-opencode --help\n"));
+
 		if (scopeAnswer.scope === "global") {
+			console.log(chalk.gray("💡 The framework is now available globally"));
 			console.log(
-				chalk.white(`1. Framework installed to: ${chalk.cyan(targetDir)}`),
-			);
-			console.log(
-				chalk.white(
-					`2. Configuration updated at: ${chalk.cyan(path.join(os.homedir(), ".config", "opencode", "opencode.json"))}`,
-				),
+				chalk.gray("   Use 'super-opencode' command from any project\n"),
 			);
 		} else {
-			console.log(chalk.white("1. Read AGENTS.md to understand the workflow."));
-			console.log(chalk.white("2. Configuration updated in ./opencode.json"));
+			console.log(
+				chalk.gray(
+					"💡 The framework is installed in the current project only\n",
+				),
+			);
 		}
 	} catch (error) {
 		spinner.fail(chalk.red("Installation failed."));

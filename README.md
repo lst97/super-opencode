@@ -16,7 +16,7 @@ Super-OpenCode provides a structured framework for AI-assisted software developm
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm, pnpm, or yarn
 
 ### Quick Install
@@ -32,6 +32,7 @@ super-opencode
 ```
 
 The installer will guide you through:
+
 1. Choosing installation scope (global or project)
 2. Selecting components to install (agents, commands, skills, core)
 3. Configuring optional MCP servers (Context7, Serena, Tavily, etc.)
@@ -39,8 +40,15 @@ The installer will guide you through:
 ### Manual Install
 
 After npm install, the framework files will be available at:
-- **Global**: `~/.opencode/`
-- **Project**: `./opencode.json` in your project directory
+
+**Global Installation:**
+
+- **Linux/macOS**: `~/.config/opencode/`
+- **Windows**: `%APPDATA%\opencode\`
+
+**Project Installation:**
+
+- **All Platforms**: Files are copied to the current working directory under `.opencode/` and `AGENTS.md`
 
 ## Features
 
@@ -71,6 +79,7 @@ Reusable capabilities that agents can invoke:
 - **reflexion**: Post-action analysis and learning
 - **debug-protocol**: Root cause analysis workflow
 - **simplification**: Complexity reduction
+- **package-manager**: Multi-language package manager detection (npm, yarn, pnpm, poetry, cargo, and 40+ more)
 
 ### Slash Commands
 
@@ -91,11 +100,62 @@ Pre-built workflows for common tasks:
 - `/soc-improve` - Continuous improvement
 - `/soc-help` - Help and documentation
 
+### Package Manager Detection
+
+Super-OpenCode includes a powerful multi-language package manager detection system that automatically identifies the correct package manager for any project:
+
+**Supported Languages:** JavaScript/TypeScript, Python, Go, Rust, Java, Ruby, PHP, .NET, Elixir, Haskell, C/C++, Swift, Scala, Clojure, Julia, R
+
+**Quick Usage:**
+
+```bash
+# After installing super-opencode
+detect-pm
+
+# Or use directly from node_modules
+npx super-opencode detect-pm
+
+# Get JSON output for CI/CD
+detect-pm --json
+
+# Detect specific language
+detect-pm python
+detect-pm javascript
+```
+
+**Example Output:**
+
+```json
+{
+  "languages": [
+    {
+      "language": "javascript",
+      "package_manager": "pnpm",
+      "confidence": 95,
+      "commands": {
+        "install": "pnpm install --frozen-lockfile",
+        "add": "pnpm add"
+      }
+    }
+  ]
+}
+```
+
+**CI/CD Integration:**
+
+```yaml
+- name: Detect Package Manager
+  run: |
+    PM=$(npx detect-pm --recommend)
+    $PM install
+```
+
 ### MCP Server Integration
 
 The framework supports configuration of various MCP servers:
 
 **Recommended (Core)**:
+
 - Context7 - Official documentation lookup
 - Serena - Codebase analysis and navigation
 - Tavily Search - Web search for research
@@ -103,6 +163,7 @@ The framework supports configuration of various MCP servers:
 - Sequential Thinking - Multi-step reasoning
 
 **Optional**:
+
 - GitHub - GitHub API integration
 - SQLite - Database operations
 - Chrome DevTools - Browser debugging
@@ -146,21 +207,25 @@ super-opencode/
 ### Example Workflows
 
 #### Implement a Feature
+
 ```bash
 /soc-implement "User Authentication" --agent backend
 ```
 
 #### Design a System
+
 ```bash
 /soc-design "Microservices Architecture"
 ```
 
 #### Code Review
+
 ```bash
 /soc-review
 ```
 
 #### Research
+
 ```bash
 /soc-research "Best practices for React state management"
 ```
@@ -170,25 +235,30 @@ super-opencode/
 Super-OpenCode enforces a structured development approach:
 
 ### 1. Evidence-Based Development
+
 - Always verify with official sources
 - Use context7 MCP for documentation lookup
 - Check existing code before implementing
 - Never guess or make assumptions
 
 ### 2. Confidence-First Implementation
+
 - Check confidence before starting work
 - **≥90%**: Proceed with implementation
 - **70-89%**: Investigate more, present alternatives
 - **<70%**: STOP - ask questions, gather context
 
 ### 3. Parallel-First Execution
+
 - Use Wave → Checkpoint → Wave pattern
 - Batch read operations together
 - Analyze together before editing
 - 3.5x faster than sequential execution
 
 ### 4. Self-Correction Protocol
+
 When errors occur:
+
 1. STOP - Don't retry immediately
 2. INVESTIGATE - Research root cause
 3. HYPOTHESIZE - Form theory with evidence
@@ -200,44 +270,91 @@ When errors occur:
 
 ### OpenCode Configuration
 
-After installation, configuration is stored in:
-- **Global**: `~/.config/opencode/opencode.json`
-- **Project**: `./opencode.json`
+After installation, configuration is stored in platform-specific locations:
+
+**Global Configuration:**
+
+- **Linux**: `~/.config/opencode/opencode.json` (follows XDG Base Directory Specification)
+- **macOS**: `~/Library/Application Support/opencode/opencode.json`
+- **Windows**: `%APPDATA%\opencode\opencode.json` (typically `C:\Users\<username>\AppData\Roaming\opencode\opencode.json`)
+
+**Project Configuration:**
+
+- **All Platforms**: `./opencode.json` in your project root
+
+**Environment Variables:**
+
+- `OPENCODE_CONFIG_DIR`: Override the global config directory
+- `OPENCODE_CONFIG`: Override the full path to the config file
+- `OPENCODE_CONFIG_CONTENT`: Provide inline JSON configuration
+
+### Framework Installation Locations
+
+When installing Super-OpenCode globally:
+
+- **Linux**: `~/.config/opencode/` (follows XDG Base Directory Specification)
+- **macOS**: `~/.config/opencode/` (same as Linux for consistency with OpenCode)
+- **Windows**: `%APPDATA%\opencode\` (typically `C:\Users\<username>\AppData\Roaming\opencode\`)
+
+**Note**: Framework files (agents, commands, skills) are stored alongside the OpenCode config file for easy access.
+
+**Project Installation:**
+
+- **All Platforms**: Current working directory (where you run the installer)
 
 ### MCP Server Configuration
 
-MCP servers are configured in the `mcp` section of your config:
+MCP servers are configured in the `mcp` section of your config. According to the [OpenCode MCP documentation](https://opencode.ai/docs/mcp-servers):
 
 ```json
 {
+  "$schema": "https://opencode.ai/config.json",
   "mcp": {
     "context7": {
       "type": "local",
-      "command": ["npx", "-y", "@upstash/context7-mcp"]
+      "command": ["npx", "-y", "@upstash/context7-mcp"],
+      "enabled": true
     },
     "filesystem": {
       "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/path/to/project"]
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/path/to/project"
+      ]
+    },
+    "tavily": {
+      "type": "local",
+      "command": ["npx", "-y", "tavily-mcp@latest"],
+      "environment": {
+        "TAVILY_API_KEY": "your-api-key"
+      }
     }
   }
 }
 ```
 
+**Note**: MCP servers can be enabled/disabled per agent by modifying the agent configuration. For more details, see the [official OpenCode MCP docs](https://opencode.ai/docs/mcp-servers).
+
 ## Quality Standards
 
 ### Code Quality
+
 - All public functions require docstrings
 - Use type hints where supported
 - Follow existing project patterns
 - Include usage examples for complex functions
 
 ### Documentation Quality
+
 - Current with "Last Verified" dates
 - Minimal but necessary information
 - Clear with concrete examples
 - Practical and copy-paste ready
 
 ### Testing Standards
+
 - Write tests for new functionality
 - Aim for >80% code coverage
 - Include edge cases and error conditions

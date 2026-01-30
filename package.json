@@ -1,25 +1,30 @@
 {
   "name": "super-opencode",
-  "version": "1.1.1",
-  "description": "Super-OpenCode Framework Installer",
+  "version": "1.2.0",
+  "description": "Multi-language package manager detection and OpenCode agent framework. Auto-detects npm, yarn, pnpm, poetry, cargo, and 40+ package managers across 16 programming languages.",
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
-    "super-opencode": "./dist/cli.js"
+    "super-opencode": "./dist/cli.js",
+    "detect-pm": "./.opencode/skills/package-manager/scripts/detect-package-manager.sh"
   },
   "files": [
     "dist",
     "AGENTS.md",
     ".opencode",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "!.opencode/skills/package-manager/scripts/test*"
   ],
   "scripts": {
     "build": "tsc",
     "lint": "biome check src/",
     "format": "biome check --write src/",
-    "prepublishOnly": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepublishOnly": "npm run build && npm run validate",
+    "validate": "npm run check-files && npm run check-scripts",
+    "check-files": "node -e \"console.log('Package files:', require('fs').readdirSync('.'))\"",
+    "check-scripts": "bash .opencode/skills/package-manager/scripts/detect-package-manager.sh --help > /dev/null && echo '✓ Package manager detection script works'",
+    "test": "echo 'Tests not implemented - validation only' && npm run validate"
   },
   "keywords": [
     "opencode",
@@ -29,6 +34,17 @@
   ],
   "author": "lst97",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lst97/super-opencode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lst97/super-opencode/issues"
+  },
+  "homepage": "https://github.com/lst97/super-opencode#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "chalk": "^5.6.2",
     "fs-extra": "^11.3.3",
