@@ -6,12 +6,14 @@ description: Post-action analysis to generate heuristics, update project memory,
 # Reflexion Skill
 
 ## Purpose
+
 To transform **Failures** into **Heuristics**.
 Reflexion is the cognitive step that occurs **after** a failed attempt and **before** the next attempt. It breaks the "Insanity Loop" (doing the same thing twice expecting different results).
 
 **ROI Metric**: Prevents 5-10 wasted attempts in a loop by forcing a strategy shift after the first failure.
 
 ## When to Use
+
 - **Automatic Trigger**: After a tool error (e.g., `bash` exit code != 0).
 - **Automatic Trigger**: After a test failure during `execution` mode.
 - **Manual Trigger**: When the user rejects an artifact ("This isn't what I asked for").
@@ -20,24 +22,28 @@ Reflexion is the cognitive step that occurs **after** a failed attempt and **bef
 ## The Reflexion Protocol (The Loop)
 
 ### 1. The Halt (Stop)
+
 **Rule**: *Never retry immediately.*
 If an error occurs, you must pause. Do not simply re-run the command hoping for a different outcome.
 
 ### 2. The Trace (Diagnosis)
+
 **Action**: Analyze the mismatch between *Expected Output* and *Actual Output*.
-*   *Was it a Syntax Error?* (Context failure).
-*   *Was it a Logic Error?* (Reasoning failure).
-*   *Was it a Hallucination?* (Knowledge failure).
+- *Was it a Syntax Error?* (Context failure).
+- *Was it a Logic Error?* (Reasoning failure).
+- *Was it a Hallucination?* (Knowledge failure).
 
 ### 3. The Heuristic (Correction)
+
 **Action**: Create a new rule for yourself.
-*   *Old Thought:* "I will use `rm -rf` to clean up."
-*   *New Heuristic:* "I must check if the directory exists before attempting delete."
+- *Old Thought:* "I will use `rm -rf` to clean up."
+- *New Heuristic:* "I must check if the directory exists before attempting delete."
 
 ### 4. The Store (Memory)
+
 **Action**: Save this lesson.
-*   *Short-term:* Apply to current context window.
-*   *Long-term:* Write to `.opencode/memory/patterns.md`.
+- *Short-term:* Apply to current context window.
+- *Long-term:* Write to `.opencode/memory/patterns.md`.
 
 ## Execution Template
 
@@ -77,6 +83,7 @@ Maintain a dedicated memory structure to allow the `researcher` and `pm-agent` t
 ```
 
 ### Example: `.opencode/memory/anti_patterns.md`
+
 ```markdown
 ## ⛔ Anti-Patterns
 
@@ -93,10 +100,10 @@ Maintain a dedicated memory structure to allow the `researcher` and `pm-agent` t
 
 ## Integration with Agents
 
--   **`execution` agent**: Must trigger `reflexion` after 2 failed build attempts.
-    -   *Logic:* "Attempt 1 Failed -> Retry -> Attempt 2 Failed -> **STOP & REFLECT** -> Attempt 3".
--   **`pm-agent`**: Reads `.opencode/memory/patterns.md` at the start of a new task to load context.
--   **`writer`**: Uses successful reflexions to update the project's `README.md` or `CONTRIBUTING.md`.
+- **`execution` agent**: Must trigger `reflexion` after 2 failed build attempts.
+  - *Logic:* "Attempt 1 Failed -> Retry -> Attempt 2 Failed -> **STOP & REFLECT** -> Attempt 3".
+- **`pm-agent`**: Reads `.opencode/memory/patterns.md` at the start of a new task to load context.
+- **`writer`**: Uses successful reflexions to update the project's `README.md` or `CONTRIBUTING.md`.
 
 ## Reflexion vs. Debugging
 
